@@ -1,7 +1,6 @@
 import random
 import sys
 from utilities import get_configurations, get_obstacle_locations, get_start_states, get_target_states
-import time
 
 # Create a GridWorld simulation (NOTE: The world should be the same size as the
 # D* Lite simulation)
@@ -41,8 +40,6 @@ class GridWorld(object):
             if(j != i):
                 reward += abs((state[0] - self.current_state[j][0]) +
                               (state[1] - self.current_state[j][1]))
-        #reward -= abs((state[0] - self.initial_state[i][0]) +
-                      #(state[1] - self.initial_state[i][1]))
         return reward
         
     #### Internal functions for running policies ###
@@ -242,41 +239,6 @@ class GridWorld(object):
             for action in self.actions:
                 for i in range(len(self.initial_state)):
                     Qvalues[i][(state, action)] = 0
-
-        """# For a trial to complete, all robots must reach a goal state
-        for i in range(num_trials):
-            num_goal = 0
-            goals_reached = [False for robot in self.initial_state]
-            # NOTE: We can get away with planning for each robot separately
-            while(num_goal != len(self.initial_state)):
-                for i in range(len(self.initial_state)):
-                    if(goals_reached[i] == False):
-                        position = self.current_state[i]
-                        selected_action = None
-                        if(random.random() < epsilon): # Explore
-                            selected_action = self.actions[random.randint(0, 3)]
-                        else: # Don't explore
-                            action_value = float("-inf")
-                            for action in self.actions: # Select action
-                                if(Qvalues[i][(position, action)] > action_value and
-                                   (self.move(position, action) not in self.current_state)):
-                                    action_value = Qvalues[i][(position, action)]
-                                    selected_action = action
-                        new_position = self.move(position, selected_action)
-                   
-                        if(new_position in self.targets):
-                            Qvalues[i][(position, selected_action)] = ((1 - alpha) * Qvalues[i][(position, selected_action)]) + (alpha * (self.living_reward + (self.gamma * self.get_reward(i, position))))
-                            goals_reached[i] = True # Goal reached
-                            num_goal += 1
-                        else:
-                            action_value = float("-inf")
-                            for action in self.actions: # Select action
-                                if(Qvalues[i][(new_position, action)] > action_value):
-                                    action_value = Qvalues[i][(new_position, action)]
-                            Qvalues[i][(position, selected_action)] = ((1 - alpha) * Qvalues[i][(position, selected_action)]) + (alpha * (self.living_reward + (self.gamma * action_value)))
-        
-                        self.current_state[i] = new_position # Move the robot now that the previos Q-value has been updated
-            self.current_state = self.initial_state[:] # Reset the robot locations"""
         
         # NOTE: We can get away with planning for each robot separately
         for i in range(len(self.initial_state)):
@@ -323,10 +285,8 @@ class GridWorld(object):
 if __name__ == "__main__":
     # NOTE: The distance of the goal states (T's) are determined by 'border_dist' below
     border_dist = 2 # Goal separation
-    configuration_size = (2, 3)
+    configuration_size = (2, 2)
 
-    print(len(get_configurations(configuration_size)))
-    s = time.time()
     for config in get_configurations(configuration_size):
         """
         Create a GridWorld simulation (NOTE: The world should be the same size as the
@@ -341,14 +301,12 @@ if __name__ == "__main__":
         blocked = set(get_obstacle_locations(config, border_dist))
         grid_world = GridWorld(width, height, start, targets, blocked)
         
-        #print("Original map:")
-        #grid_world.print_map()
+        print("Original map:")
+        grid_world.print_map()
 
         Qvalues = grid_world.Qlearner(alpha = 0.5, epsilon = 0.5, num_trials = 1000)
         for i in range(len(Qvalues)):
             learned_values = grid_world.QValue_to_value(Qvalues[i])
             learned_policy = grid_world.extract_policy(i, learned_values)
-            #print("Learned map for robot {}:".format(i + 1))
-            #grid_world.print_map(learned_policy)
-    end = time.time()
-    print(end - s)
+            print("Learned map for robot {}:".format(i + 1))
+            grid_world.print_map(learned_policy)
