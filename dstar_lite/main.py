@@ -55,6 +55,27 @@ done = False
 
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
+# An option for automated movement (NOTE: Cannot add obstacles if this is set to True)
+automate = False
+
+def move_bots(param_list):
+    global num_robots, done
+    for i in range(num_robots):
+        goal = param_list[i][1]
+        dstar = param_list[i][2]
+        s_new = next(dstar.move_to_goal())[0]
+        if s_new == goal: # Search is complete
+            if(param_list[i][3] == False):
+                print("Goal {} Reached!".format(i + 1))
+                param_list[i][3] = True
+    
+    # Check if all robots are done (game is complete)
+    for i in range(num_robots):
+        complete = param_list[i][3]
+        if(complete == False):
+            break
+        if(i == num_robots - 1):
+            done = True
 
 if __name__ == "__main__":
     param_list = []
@@ -112,45 +133,33 @@ if __name__ == "__main__":
     # -------- Main Program Loop -----------
     while not done:    
         events = pygame.event.get()
-        if((len(events) == 0) and (init_event == False)):
-            continue
-        for event in events: # User did something
-            if event.type == pygame.QUIT: # If user clicked close
-                done = True # Flag that we are done so we exit this loop
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                for i in range(num_robots):
-                    goal = param_list[i][1]
-                    dstar = param_list[i][2]
-                    s_new = next(dstar.move_to_goal())[0]
-                    if s_new == goal: # Search is complete
-                        if(param_list[i][3] == False):
-                            print("Goal {} Reached!".format(i + 1))
-                            param_list[i][3] = True
-
-                # Check if all robots are done (game is complete)
-                for i in range(num_robots):
-                    complete = param_list[i][3]
-                    if(complete == False):
-                        break
-                    if(i == num_robots - 1):
-                        done = True
-
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                # User clicks the mouse. Get the position.
-                pos = pygame.mouse.get_pos()
-                # Change the x/y screen coordinates to grid coordinates
-                column = pos[0] // (WIDTH + MARGIN)
-                row = pos[1] // (HEIGHT + MARGIN)
-                # Cross out that location
-                g = param_list[0][2].real_graph
-                isValid = True
-                for i in range(num_robots):
-                    goal = param_list[i][1]
-                    if((column, row) == goal):
-                        isValid = False
-                if(isValid == True):
-                    for j in range(num_robots):
-                        param_list[j][2].real_graph.walls.add((column, row))
+        if automate:
+            move_bots(param_list)
+        else: # Manual movement
+            if((len(events) == 0) and (init_event == False)):
+                continue
+            for event in events: # User did something
+                if event.type == pygame.QUIT: # If user clicked close
+                    done = True # Flag that we are done so we exit this loop
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    move_bots(param_list)
+    
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    # User clicks the mouse. Get the position.
+                    pos = pygame.mouse.get_pos()
+                    # Change the x/y screen coordinates to grid coordinates
+                    column = pos[0] // (WIDTH + MARGIN)
+                    row = pos[1] // (HEIGHT + MARGIN)
+                    # Cross out that location
+                    g = param_list[0][2].real_graph
+                    isValid = True
+                    for i in range(num_robots):
+                        goal = param_list[i][1]
+                        if((column, row) == goal):
+                            isValid = False
+                    if(isValid == True):
+                        for j in range(num_robots):
+                            param_list[j][2].real_graph.walls.add((column, row))
 
         # Set the screen background
         screen.fill(BLACK)
@@ -217,6 +226,10 @@ if __name__ == "__main__":
 
         # Update the screen with what is drawn
         pygame.display.flip()
+        
+        # Pause the game for viewing purposes if automated movement is set on
+        if automate:
+            pygame.time.wait(450)
 
     # Be IDLE friendly. Without this line, the program will 'hang' on exit.
     pygame.quit()
