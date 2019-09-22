@@ -99,4 +99,4 @@ def get_target_states(configuration, border_dist):
     return(targets)
 
 if __name__ == "__main__":
-    print(get_configurations((3, 3)))
+    print(get_configurations((2, 2)))

@@ -2,8 +2,6 @@ import random
 import sys
 from utilities import get_configurations, get_obstacle_locations, get_start_states, get_target_states
 
-# Create a GridWorld simulation (NOTE: The world should be the same size as the
-# D* Lite simulation)
 width = 6
 height = 6
 
